@@ -16,6 +16,7 @@ module.exports = {
       autoIndex: true,
       collection: 'review',
       timestamps: true,
+      versionKey: false,
     });
     return newSchema;
   },

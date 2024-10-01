@@ -8,11 +8,13 @@ module.exports = {
     try {
       const {
         Models: { Book },
+        configs: { runtime },
       } = global;
       const { page, limit } = getPaginationParams(req);
       const { id, title, isbn, startPrice, endPrice, authorId, categoryId } =
         req.query;
 
+      // Build the query condition based on the provided parameters
       const queryCondition = {
         ...(id && { _id: id }),
         ...(title && { $text: { $search: title } }),
@@ -37,6 +39,19 @@ module.exports = {
         .populate('category', 'name')
         .lean();
 
+      const {
+        bookConfig: { versionApplyDiscount },
+      } = runtime;
+      // Calculate discounted price for each book
+      books?.forEach((book) => {
+        if (
+          book.schemaVersion === versionApplyDiscount &&
+          book?.discountPercent
+        )
+          book.discountedPrice =
+            book.price - (book.price * book?.discountPercent) / 100;
+      });
+
       return res.success({
         books,
         paging: {
@@ -54,6 +69,7 @@ module.exports = {
     try {
       const {
         Models: { Book },
+        configs: { runtime },
       } = global;
       // Check query by id or isbn
       const queryCondition = isValidObjectId(req.params.id)
@@ -66,6 +82,14 @@ module.exports = {
         .populate('reviews', 'name reviewer content')
         .lean();
 
+      const {
+        bookConfig: { versionApplyDiscount },
+      } = runtime;
+      // Calculate discounted price for book
+      if (book.schemaVersion === versionApplyDiscount && book?.discountPercent)
+        book.discountedPrice =
+          book.price - (book.price * book.discountPercent) / 100;
+
       return res.success({ book: book ?? {} });
     } catch (error) {
       console.error('===== Error in getBook', error);
@@ -76,13 +100,14 @@ module.exports = {
     try {
       const {
         Models: { Book, Author, Category },
+        configs: { runtime },
       } = global;
       const error = Validator.validateCreateBookRequest(req.body);
       if (error) {
         return res.badRequest(`Invalid Param, ${error.details[0].message}`);
       }
 
-      const { authorId, categoryId, isbn } = req.body;
+      const { authorId, categoryId, isbn, discountPercent } = req.body;
 
       const isExistAuthor = await Author.exists({ _id: authorId });
       if (!isExistAuthor) {
@@ -105,11 +130,19 @@ module.exports = {
         return res.badRequest('Book with ISBN already used');
       }
 
+      const {
+        bookConfig: { currentVersion, versionApplyDiscount },
+      } = runtime;
+      const isApplyDiscount =
+        currentVersion === versionApplyDiscount && discountPercent;
+
       const book = await Book.create({
         ...req.body,
         author: authorId,
         category: categoryId,
         isbn: checkValidISBN.isbn,
+        schemaVersion: currentVersion,
+        discountPercent: isApplyDiscount ? discountPercent : 0,
       });
       return res.success({ book }, 201);
     } catch (error) {
@@ -121,6 +154,7 @@ module.exports = {
     try {
       const {
         Models: { Book, Author, Category },
+        configs: { runtime },
       } = global;
       const error = Validator.validateUpdateBookRequest(req.body);
       if (error) {
@@ -138,8 +172,10 @@ module.exports = {
       }
 
       const updateData = { ...req.body };
+      delete updateData.discountPercent;
 
-      const { authorId, categoryId } = req.body;
+      const { authorId, categoryId, discountPercent } = req.body;
+      // Check if authorId or categoryId changed
       if (authorId && authorId !== isExistBook.author.toString()) {
         const isExistAuthor = await Author.exists({ _id: authorId });
         if (!isExistAuthor) {
@@ -154,6 +190,17 @@ module.exports = {
           return res.notFound('Category not found');
         }
         updateData.category = categoryId;
+      }
+
+      const {
+        bookConfig: { versionApplyDiscount },
+      } = runtime;
+      //  Check if can apply discount and update discountPercent
+      if (
+        isExistBook.schemaVersion === versionApplyDiscount &&
+        discountPercent
+      ) {
+        updateData.discountPercent = discountPercent;
       }
 
       const book = await Book.findOneAndUpdate(queryCondition, updateData, {

@@ -24,12 +24,23 @@ module.exports = {
         ref: 'review',
       },
     ],
+    discountPercent: {
+      type: Number,
+    },
+    schemaVersion: {
+      type: Number,
+      default: 1,
+    },
   },
   constructSchema: function (schemaDefinedAbove, mongooseInstance) {
+    const {
+      configs: { runtime },
+    } = global;
     var newSchema = new mongooseInstance.Schema(schemaDefinedAbove, {
       autoIndex: true,
       collection: 'book',
       timestamps: true,
+      versionKey: false,
     });
 
     newSchema.index({ title: 'text' });
@@ -37,6 +48,14 @@ module.exports = {
     newSchema.index({ price: 1 });
     newSchema.index({ authorId: 1 });
     newSchema.index({ categoryId: 1 });
+
+    // Pre-save hook to remove discountPercent
+    newSchema.pre('save', function (next) {
+      if (this.schemaVersion !== runtime?.bookConfig.versionApplyDiscount) {
+        this.discountPercent = undefined; // Remove discountPercent
+      }
+      next();
+    });
     return newSchema;
   },
 };

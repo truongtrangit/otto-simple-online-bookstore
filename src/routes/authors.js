@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const AuthorController = require('../controllers/AuthorController');
+const { authenticate } = require('../middlewares/authenticate');
 
 const router = Router();
 
@@ -50,6 +51,6 @@ router.get('/', AuthorController.getAuthors);
  *             schema:
  *               $ref: '#/components/schemas/Author'
  */
-router.post('/', AuthorController.createAuthor);
+router.post('/', authenticate, AuthorController.createAuthor);
 
 module.exports = router;

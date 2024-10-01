@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const CategoryController = require('../controllers/CategoryController');
+const { authenticate } = require('../middlewares/authenticate');
 
 const router = Router();
 
@@ -45,6 +46,6 @@ router.get('/', CategoryController.getCategories);
  *       400:
  *         description: Bad request
  */
-router.post('/', CategoryController.createCategory);
+router.post('/', authenticate, CategoryController.createCategory);
 
 module.exports = router;

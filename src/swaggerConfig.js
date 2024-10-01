@@ -30,6 +30,20 @@ const options = {
               type: 'string',
               description: 'The title of the book',
             },
+            price: {
+              type: 'number',
+              description: 'The price of the book',
+            },
+            discountPrice: {
+              type: 'number',
+              description: 'The discount price of the book',
+              optional: true,
+            },
+            discountPercent: {
+              type: 'number',
+              description: 'The discount percentage of the book',
+              optional: true,
+            },
             isbn: {
               type: 'string',
               description: 'The ISBN of the book',

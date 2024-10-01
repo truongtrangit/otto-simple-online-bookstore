@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const BookController = require('../controllers/BookController');
+const { authenticate } = require('../middlewares/authenticate');
 
 const router = Router();
 
@@ -109,6 +110,8 @@ router.get('/:id', BookController.getBook);
  *                 type: string
  *               categoryId:
  *                  type: string
+ *               discountPercent:
+ *                  type: number
  *     responses:
  *       201:
  *         description: Book created successfully
@@ -117,7 +120,7 @@ router.get('/:id', BookController.getBook);
  *             schema:
  *               $ref: '#/components/schemas/Book'
  */
-router.post('/', BookController.createBook);
+router.post('/', authenticate, BookController.createBook);
 /**
  * @swagger
  * /api/books/{id}:
@@ -144,6 +147,8 @@ router.post('/', BookController.createBook);
  *                 type: string
  *               price:
  *                 type: number
+ *               discountPercent:
+ *                 type: number
  *               authorId:
  *                 type: string
  *               categoryId:
@@ -158,7 +163,7 @@ router.post('/', BookController.createBook);
  *       404:
  *         description: Book not found
  */
-router.put('/:id', BookController.updateBook);
+router.put('/:id', authenticate, BookController.updateBook);
 /**
  * @swagger
  * /api/books/{id}:
@@ -180,6 +185,6 @@ router.put('/:id', BookController.updateBook);
  *       404:
  *         description: Book not found
  */
-router.delete('/:id', BookController.deleteBook);
+router.delete('/:id', authenticate, BookController.deleteBook);
 
 module.exports = router;

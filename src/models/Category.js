@@ -9,6 +9,7 @@ module.exports = {
       autoIndex: true,
       collection: 'category',
       timestamps: true,
+      versionKey: false,
     });
 
     return newSchema;

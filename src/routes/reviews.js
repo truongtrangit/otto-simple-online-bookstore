@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const ReviewController = require('../controllers/ReviewController');
+const { authenticate } = require('../middlewares/authenticate');
 
 const router = Router();
 
@@ -31,6 +32,6 @@ const router = Router();
  *         description: Review created successfully
  *
  */
-router.post('/', ReviewController.createReview);
+router.post('/', authenticate, ReviewController.createReview);
 
 module.exports = router;

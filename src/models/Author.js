@@ -11,6 +11,7 @@ module.exports = {
       autoIndex: true,
       collection: 'author',
       timestamps: true,
+      versionKey: false,
     });
 
     return newSchema;

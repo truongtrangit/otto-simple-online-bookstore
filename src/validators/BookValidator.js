@@ -9,6 +9,7 @@ module.exports = {
       price: Joi.number().required(),
       authorId: Joi.objectId().required(),
       categoryId: Joi.objectId().required(),
+      discountPercent: Joi.number().min(0).max(100).optional(),
     });
 
     const { error } = paramSchema.validate(data);
@@ -21,6 +22,7 @@ module.exports = {
       price: Joi.number(),
       authorId: Joi.objectId(),
       categoryId: Joi.objectId(),
+      discountPercent: Joi.number().min(0).max(100).optional(),
     });
 
     const { error } = paramSchema.validate(data);
