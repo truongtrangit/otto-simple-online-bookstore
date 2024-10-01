@@ -5,9 +5,8 @@ const helmet = require('helmet');
 const router = require('./routes');
 const dbConfig = require('./core/database');
 const RequestResponse = require('./responses');
-const _ = require('lodash');
 
-async function boot() {
+async function start() {
   const app = express();
   // Add helmet middleware to secure app
   app.use(helmet());
@@ -18,14 +17,13 @@ async function boot() {
 
   // Bind Response Method
   app.all('*', function (req, res, next) {
-    _.forEach(RequestResponse, function (val) {
-      const { name, func } = val;
+    RequestResponse.forEach((item) => {
+      const { name, func } = item;
       res[name] = func.bind({
-        req: req,
-        res: res,
+        req,
+        res,
       });
     });
-
     return next();
   });
 
@@ -37,4 +35,28 @@ async function boot() {
   });
 }
 
-boot();
+async function stop() {
+  await dbConfig.stop();
+}
+
+start();
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception thrown:', err);
+});
+
+process.on('SIGTERM', async (_) => {
+  console.warn('[System] Receive SIGTERM');
+  await stop();
+});
+
+process.on('SIGINT', async (_) => {
+  console.warn('[System] Receive SIGINT');
+  await stop();
+});

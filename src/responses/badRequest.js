@@ -1,7 +1,7 @@
 module.exports = function badRequest(msg) {
-  var res = this.res;
+  const res = this.res;
 
-  var statusCode = 400;
+  const statusCode = 400;
 
   res.status(statusCode);
 

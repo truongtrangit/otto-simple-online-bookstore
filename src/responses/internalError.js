@@ -1,9 +1,9 @@
 const _ = require('lodash');
 
 module.exports = function internalError(error, message) {
-  var res = this.res;
+  const res = this.res;
 
-  var statusCode = 500;
+  const statusCode = 500;
 
   res.status(statusCode);
 

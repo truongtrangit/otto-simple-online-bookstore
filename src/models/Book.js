@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 
 module.exports = {
   schema: {
-    title: { type: String, required: true },
-    isbn: { type: String, required: true },
+    title: { type: String, required: true, maxLength: 256 },
+    isbn: { type: String, required: true, unique: true },
     price: {
       type: Number,
       require: true,
@@ -18,6 +18,12 @@ module.exports = {
       ref: 'category',
       require: true,
     },
+    reviews: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'review',
+      },
+    ],
   },
   constructSchema: function (schemaDefinedAbove, mongooseInstance) {
     var newSchema = new mongooseInstance.Schema(schemaDefinedAbove, {
@@ -29,8 +35,8 @@ module.exports = {
     newSchema.index({ title: 'text' });
     newSchema.index({ isbn: 1 });
     newSchema.index({ price: 1 });
-    newSchema.index({ author: 1 });
-    newSchema.index({ category: 1 });
+    newSchema.index({ authorId: 1 });
+    newSchema.index({ categoryId: 1 });
     return newSchema;
   },
 };

@@ -1,7 +1,7 @@
 module.exports = function success(data, code) {
-  var res = this.res;
+  const res = this.res;
 
-  var statusCode = code || 200;
+  const statusCode = code || 200;
 
   res.status(statusCode);
 

@@ -1,7 +1,7 @@
 module.exports = function unauthorized(msg) {
-  var res = this.res;
+  const res = this.res;
 
-  var statusCode = 401;
+  const statusCode = 401;
 
   res.status(statusCode);
 

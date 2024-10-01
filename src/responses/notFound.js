@@ -1,7 +1,7 @@
 module.exports = function notFound(msg) {
-  var res = this.res;
+  const res = this.res;
 
-  var statusCode = 404;
+  const statusCode = 404;
 
   res.status(statusCode);
 
