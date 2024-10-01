@@ -2,9 +2,11 @@ const configs = require('./configs');
 global.configs = configs;
 const express = require('express');
 const helmet = require('helmet');
+const swaggerUi = require('swagger-ui-express');
 const router = require('./routes');
 const dbConfig = require('./core/database');
 const RequestResponse = require('./responses');
+const swaggerSpecs = require('./swaggerConfig');
 
 async function start() {
   const app = express();
@@ -26,6 +28,9 @@ async function start() {
     });
     return next();
   });
+
+  // Swagger setup
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
   app.use('/api', router);
 
@@ -49,14 +54,4 @@ process.on('unhandledRejection', (reason, promise) => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception thrown:', err);
-});
-
-process.on('SIGTERM', async (_) => {
-  console.warn('[System] Receive SIGTERM');
-  await stop();
-});
-
-process.on('SIGINT', async (_) => {
-  console.warn('[System] Receive SIGINT');
-  await stop();
 });

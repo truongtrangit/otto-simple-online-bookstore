@@ -6,7 +6,7 @@ module.exports = {
     const paramSchema = Joi.object().keys({
       bookId: Joi.objectId().required(),
       reviewer: Joi.string().required(),
-      comment: Joi.string().required(),
+      content: Joi.string().required(),
     });
 
     const { error } = paramSchema.validate(data);

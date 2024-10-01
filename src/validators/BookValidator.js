@@ -9,12 +9,6 @@ module.exports = {
       price: Joi.number().required(),
       authorId: Joi.objectId().required(),
       categoryId: Joi.objectId().required(),
-      reviews: Joi.array().items(
-        Joi.object().keys({
-          reviewer: Joi.string().required(),
-          comment: Joi.string().required(),
-        })
-      ),
     });
 
     const { error } = paramSchema.validate(data);

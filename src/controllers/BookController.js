@@ -55,10 +55,15 @@ module.exports = {
       const {
         Models: { Book },
       } = global;
-      const book = await Book.findById(req.params.id)
+      // Check query by id or isbn
+      const queryCondition = isValidObjectId(req.params.id)
+        ? { _id: req.params.id }
+        : { isbn: req.params.id };
+
+      const book = await Book.findOne(queryCondition)
         .populate('category', 'name')
         .populate('author', 'name')
-        .populate('reviews', 'name reviewer comment')
+        .populate('reviews', 'name reviewer content')
         .lean();
 
       return res.success({ book: book ?? {} });
@@ -81,11 +86,11 @@ module.exports = {
 
       const isExistAuthor = await Author.exists({ _id: authorId });
       if (!isExistAuthor) {
-        return res.badRequest('Author not found');
+        return res.notFound('Author not found');
       }
       const isExistCategory = await Category.exists({ _id: categoryId });
       if (!isExistCategory) {
-        return res.badRequest('Category not found');
+        return res.notFound('Category not found');
       }
 
       const checkValidISBN = isValidISBN(isbn);
@@ -97,13 +102,14 @@ module.exports = {
       // Make sure isbn in db just contain number without hyphen and space
       const isExistIsbn = await Book.exists({ isbn: checkValidISBN.isbn });
       if (isExistIsbn) {
-        return res.badRequest('Book with ISBN already exist');
+        return res.badRequest('Book with ISBN already used');
       }
 
       const book = await Book.create({
         ...req.body,
         author: authorId,
         category: categoryId,
+        isbn: checkValidISBN.isbn,
       });
       return res.success({ book }, 201);
     } catch (error) {
@@ -128,24 +134,24 @@ module.exports = {
 
       const isExistBook = await Book.findOne(queryCondition).lean();
       if (!isExistBook) {
-        return res.badRequest('Book not found');
+        return res.notFound('Book not found');
       }
 
       const updateData = { ...req.body };
 
       const { authorId, categoryId } = req.body;
-      if (authorId && authorId !== isExistBook.authorId.toString()) {
+      if (authorId && authorId !== isExistBook.author.toString()) {
         const isExistAuthor = await Author.exists({ _id: authorId });
         if (!isExistAuthor) {
-          return res.badRequest('Author not found');
+          return res.notFound('Author not found');
         }
         updateData.author = authorId;
       }
 
-      if (categoryId && categoryId !== isExistBook.categoryId.toString()) {
+      if (categoryId && categoryId !== isExistBook.category.toString()) {
         const isExistCategory = await Category.exists({ _id: categoryId });
         if (!isExistCategory) {
-          return res.badRequest('Category not found');
+          return res.notFound('Category not found');
         }
         updateData.category = categoryId;
       }
@@ -171,7 +177,7 @@ module.exports = {
 
       const isExistBook = await Book.exists(queryCondition);
       if (!isExistBook) {
-        return res.badRequest('Book not found');
+        return res.notFound('Book not found');
       }
 
       const book = await Book.findOneAndDelete(queryCondition);

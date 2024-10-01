@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 module.exports = {
   schema: {
     reviewer: { type: String, required: true, max: 255 },
-    comment: { type: String, required: true, max: 255 },
+    content: { type: String, required: true, max: 255 },
     bookId: {
       require: true,
       type: mongoose.Types.ObjectId,

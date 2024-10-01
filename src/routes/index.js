@@ -6,7 +6,11 @@ const reviews = require('./reviews');
 const { authenticate } = require('../middlewares/authenticate');
 
 const router = Router();
-router.use('/books', authenticate, books);
+router.use(
+  '/books',
+  // authenticate,
+  books
+);
 router.use(
   '/categories',
   // authenticate,
