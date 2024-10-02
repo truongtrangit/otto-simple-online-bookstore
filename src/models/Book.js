@@ -27,6 +27,9 @@ module.exports = {
     discountPercent: {
       type: Number,
     },
+    discountedPrice: {
+      type: Number,
+    },
     schemaVersion: {
       type: Number,
       default: 1,
@@ -53,7 +56,12 @@ module.exports = {
     newSchema.pre('save', function (next) {
       if (this.schemaVersion !== runtime?.bookConfig.versionApplyDiscount) {
         this.discountPercent = undefined; // Remove discountPercent
+        this.discountPrice = undefined; // Remove discountPrice
+      } else {
+        this.discountedPrice =
+          this.price - (this.price * this.discountPercent) / 100;
       }
+
       next();
     });
     return newSchema;

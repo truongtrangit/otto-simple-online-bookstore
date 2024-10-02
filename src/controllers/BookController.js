@@ -1,7 +1,7 @@
 const { isValidObjectId } = require('mongoose');
 const Validator = require('../validators/BookValidator');
 const getPaginationParams = require('../utils/queryParams');
-const isValidISBN = require('../utils/checkISBN');
+const { isValidISBN, formatISBN } = require('../utils/checkISBN');
 
 module.exports = {
   getBooks: async (req, res, next) => {
@@ -18,16 +18,29 @@ module.exports = {
       const queryCondition = {
         ...(id && { _id: id }),
         ...(title && { $text: { $search: title } }),
-        ...(isbn && { isbn: { $regex: isbn, $options: 'i' } }),
-        ...(startPrice && { price: { $gte: startPrice } }),
-        ...(endPrice && { price: { $lte: endPrice } }),
+        ...(isbn && { isbn: { $regex: formatISBN(isbn), $options: 'i' } }),
+        ...(startPrice && {
+          $or: [
+            { price: { $gte: startPrice } },
+            { discountedPrice: { $gte: startPrice } },
+          ],
+        }),
+        ...(endPrice && {
+          $or: [
+            { price: { $lte: endPrice } },
+            { discountedPrice: { $lte: endPrice } },
+          ],
+        }),
         ...(authorId && { author: authorId }),
         ...(categoryId && { category: categoryId }),
       };
 
       // Ensure price range is handled correctly
       if (startPrice && endPrice) {
-        queryCondition.price = { $gte: startPrice, $lte: endPrice };
+        queryCondition['$or'] = [
+          { price: { $gte: startPrice, $lte: endPrice } },
+          { discountedPrice: { $gte: startPrice, $lte: endPrice } },
+        ];
       }
 
       const total = await Book.countDocuments(queryCondition);
@@ -38,19 +51,6 @@ module.exports = {
         .populate('author', 'name')
         .populate('category', 'name')
         .lean();
-
-      const {
-        bookConfig: { versionApplyDiscount },
-      } = runtime;
-      // Calculate discounted price for each book
-      books?.forEach((book) => {
-        if (
-          book.schemaVersion === versionApplyDiscount &&
-          book?.discountPercent
-        )
-          book.discountedPrice =
-            book.price - (book.price * book?.discountPercent) / 100;
-      });
 
       return res.success({
         books,
@@ -74,21 +74,13 @@ module.exports = {
       // Check query by id or isbn
       const queryCondition = isValidObjectId(req.params.id)
         ? { _id: req.params.id }
-        : { isbn: req.params.id };
+        : { isbn: formatISBN(req.params.id) };
 
       const book = await Book.findOne(queryCondition)
         .populate('category', 'name')
         .populate('author', 'name')
         .populate('reviews', 'name reviewer content')
         .lean();
-
-      const {
-        bookConfig: { versionApplyDiscount },
-      } = runtime;
-      // Calculate discounted price for book
-      if (book.schemaVersion === versionApplyDiscount && book?.discountPercent)
-        book.discountedPrice =
-          book.price - (book.price * book.discountPercent) / 100;
 
       return res.success({ book: book ?? {} });
     } catch (error) {
@@ -119,7 +111,7 @@ module.exports = {
       }
 
       const checkValidISBN = isValidISBN(isbn);
-      if (!checkValidISBN.isValid) {
+      if (!checkValidISBN) {
         return res.badRequest('Invalid ISBN');
       }
 
@@ -164,7 +156,7 @@ module.exports = {
       // Check query by id or isbn
       const queryCondition = isValidObjectId(req.params.id)
         ? { _id: req.params.id }
-        : { isbn: req.params.id };
+        : { isbn: formatISBN(req.params.id) };
 
       const isExistBook = await Book.findOne(queryCondition).lean();
       if (!isExistBook) {
@@ -173,8 +165,10 @@ module.exports = {
 
       const updateData = { ...req.body };
       delete updateData.discountPercent;
+      delete updateData.schemaVersion;
 
-      const { authorId, categoryId, discountPercent } = req.body;
+      const { price, authorId, categoryId, discountPercent, schemaVersion } =
+        req.body;
       // Check if authorId or categoryId changed
       if (authorId && authorId !== isExistBook.author.toString()) {
         const isExistAuthor = await Author.exists({ _id: authorId });
@@ -197,10 +191,14 @@ module.exports = {
       } = runtime;
       //  Check if can apply discount and update discountPercent
       if (
-        isExistBook.schemaVersion === versionApplyDiscount &&
+        (isExistBook.schemaVersion === versionApplyDiscount ||
+          schemaVersion === versionApplyDiscount) &&
         discountPercent
       ) {
+        const currentPrice = price || isExistBook.price;
         updateData.discountPercent = discountPercent;
+        updateData.discountedPrice =
+          currentPrice - (currentPrice * discountPercent) / 100;
       }
 
       const book = await Book.findOneAndUpdate(queryCondition, updateData, {
@@ -220,15 +218,15 @@ module.exports = {
       // Check query by id or isbn
       const queryCondition = isValidObjectId(req.params.id)
         ? { _id: req.params.id }
-        : { isbn: req.params.id };
+        : { isbn: formatISBN(req.params.id) };
 
       const isExistBook = await Book.exists(queryCondition);
       if (!isExistBook) {
         return res.notFound('Book not found');
       }
 
-      const book = await Book.findOneAndDelete(queryCondition);
-      return res.success({ book });
+      await Book.findOneAndDelete(queryCondition);
+      return res.success({}, 204);
     } catch (error) {
       console.error('===== Error in deleteBook', error);
       return res.internalError(error);

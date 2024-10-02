@@ -1,3 +1,7 @@
+function formatISBN(isbn) {
+  // Remove "ISBN", hyphens, and whitespace in a single step
+  return isbn.replace(/\bISBN\b|[-\s]/g, '').trim();
+}
 /**
  * Valid ISBN sample:
  * - ISBN 0-306-40615-2
@@ -9,7 +13,7 @@
  */
 function isValidISBN(isbn) {
   // Remove "ISBN", hyphens, and whitespace in a single step
-  isbn = isbn.replace(/\bISBN\b|[-\s]/g, '').trim();
+  isbn = formatISBN(isbn);
 
   // Regex check ISBN-10 and ISBN-13
   const isbn10Pattern = /^(?:\d[\-\ ]?){9}[\dX]$/;
@@ -62,4 +66,4 @@ function isValidISBN(isbn) {
   };
 }
 
-module.exports = isValidISBN;
+module.exports = { isValidISBN, formatISBN };

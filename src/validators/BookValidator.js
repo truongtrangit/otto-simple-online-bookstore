@@ -22,6 +22,7 @@ module.exports = {
       price: Joi.number(),
       authorId: Joi.objectId(),
       categoryId: Joi.objectId(),
+      schemaVersion: Joi.number(),
       discountPercent: Joi.number().min(0).max(100).optional(),
     });
 
