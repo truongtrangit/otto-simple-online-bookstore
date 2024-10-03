@@ -1,8 +1,9 @@
 const getPaginationParams = require('../utils/queryParams');
 const Validator = require('../validators/AuthorValidator');
+const ApiError = require('../utils/apiError');
 
 module.exports = {
-  getAuthors: async (req, res) => {
+  getAuthors: async (req, res, next) => {
     try {
       const {
         Models: { Author },
@@ -25,11 +26,10 @@ module.exports = {
         },
       });
     } catch (error) {
-      console.error('===== Error in getAuthors', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
-  createAuthor: async (req, res) => {
+  createAuthor: async (req, res, next) => {
     try {
       const {
         Models: { Author },
@@ -41,8 +41,7 @@ module.exports = {
       const author = await Author.create(req.body);
       return res.success({ author });
     } catch (error) {
-      console.error('===== Error in createAuthor', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
 };

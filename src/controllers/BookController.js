@@ -2,6 +2,7 @@ const { isValidObjectId } = require('mongoose');
 const Validator = require('../validators/BookValidator');
 const getPaginationParams = require('../utils/queryParams');
 const { isValidISBN, formatISBN } = require('../utils/checkISBN');
+const ApiError = require('../utils/apiError');
 
 module.exports = {
   getBooks: async (req, res, next) => {
@@ -61,15 +62,13 @@ module.exports = {
         },
       });
     } catch (error) {
-      console.error('===== Error in getBooks', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
-  getBook: async (req, res) => {
+  getBook: async (req, res, next) => {
     try {
       const {
         Models: { Book },
-        configs: { runtime },
       } = global;
       // Check query by id or isbn
       const queryCondition = isValidObjectId(req.params.id)
@@ -84,11 +83,10 @@ module.exports = {
 
       return res.success({ book: book ?? {} });
     } catch (error) {
-      console.error('===== Error in getBook', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
-  createBook: async (req, res) => {
+  createBook: async (req, res, next) => {
     try {
       const {
         Models: { Book, Author, Category },
@@ -138,11 +136,10 @@ module.exports = {
       });
       return res.success({ book }, 201);
     } catch (error) {
-      console.error('===== Error in createBook', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
-  updateBook: async (req, res) => {
+  updateBook: async (req, res, next) => {
     try {
       const {
         Models: { Book, Author, Category },
@@ -206,8 +203,7 @@ module.exports = {
       });
       return res.success({ book });
     } catch (error) {
-      console.error('===== Error in updateBook', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
   deleteBook: async (req, res) => {
@@ -228,8 +224,7 @@ module.exports = {
       await Book.findOneAndDelete(queryCondition);
       return res.success({}, 204);
     } catch (error) {
-      console.error('===== Error in deleteBook', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
 };

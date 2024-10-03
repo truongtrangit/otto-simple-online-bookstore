@@ -1,8 +1,9 @@
 const getPaginationParams = require('../utils/queryParams');
 const Validator = require('../validators/CategoryValidator');
+const ApiError = require('../utils/apiError');
 
 module.exports = {
-  getCategories: async (req, res) => {
+  getCategories: async (req, res, next) => {
     try {
       const {
         Models: { Category },
@@ -25,11 +26,10 @@ module.exports = {
         },
       });
     } catch (error) {
-      console.error('===== Error in getCategories', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
-  createCategory: async (req, res) => {
+  createCategory: async (req, res, next) => {
     try {
       const {
         Models: { Category },
@@ -43,8 +43,7 @@ module.exports = {
       const category = await Category.create({ name });
       return res.success({ category }, 201);
     } catch (error) {
-      console.error('===== Error in createCategory', error);
-      return res.internalError(error);
+      next(new ApiError(error?.code || 500, error?.message));
     }
   },
 };

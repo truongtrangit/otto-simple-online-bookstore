@@ -51,6 +51,23 @@ async function start() {
 
   app.use('/api', router);
 
+  app.use((err, req, res, next) => {
+    const { statusCode = 500, message = 'Internal server error', detail } = err;
+
+    if (statusCode === 500) {
+      console.error('===== Error in server', err);
+    }
+
+    res.status(statusCode).json({
+      status: 'error',
+      data: {
+        code: statusCode,
+        message,
+        detail,
+      },
+    });
+  });
+
   const PORT = configs.runtime.port;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
