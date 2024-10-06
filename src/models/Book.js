@@ -49,8 +49,8 @@ module.exports = {
     newSchema.index({ title: 'text' });
     newSchema.index({ isbn: 1 });
     newSchema.index({ price: 1 });
-    newSchema.index({ authorId: 1 });
-    newSchema.index({ categoryId: 1 });
+    newSchema.index({ author: 1 });
+    newSchema.index({ category: 1 });
 
     // Pre-save hook to remove discountPercent
     newSchema.pre('save', function (next) {

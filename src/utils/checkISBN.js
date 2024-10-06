@@ -60,10 +60,7 @@ function isValidISBN(isbn) {
     const lastDigit = parseInt(isbn[12]);
     isValid = checksum === lastDigit;
   }
-  return {
-    isValid,
-    isbn,
-  };
+  return isValid;
 }
 
 module.exports = { isValidISBN, formatISBN };
